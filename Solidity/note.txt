@@ -1,0 +1,69 @@
+1. Kiểu dữ liệu
+- bool
+- int/uint: (int8–int256/uint8–uint256) (step by 8 bit)
+- address: ~20 byte. Mỗi address có một lượng Ether nhất định, là số cryptocurrency được dùng trên blockchain, và có thể cho và nhận Ether từ các address khác
+- byte
+- enum
+- function type
+- struct
+- mapping: tương tự hashtable. Cấu trúc mapping(_KeyType => _ValueType) với _KeyType có thể là bất kì kiểu gì ngoại trừ mapping, dynamic-sized array, contract, enum, struct. _ValueType có thể là bất kì kiểu dữ liệu nào
+- array
+
+2. Contract
+- Tương tự như class trong OOP với các thuộc tính (state variables) và phương thức (functions). Các khái niệm abstract contract (contract với ít nhất 1 phương thức chưa được thực thi), interface (chỉ gồm chữ ký thao tác) cũng tương tự OOP.
+- Hỗ trợ đa kế thừa (sử dụng thuật toán C3 Linearzation tương tự python)
+
+3.Function
+- Có 2 cách gọi 1 phương thức:
+    + internal calling: con trỏ instruction nhảy đến vị trí function trong bộ nhớ để thực thi
+    + external calling: EVM thực hiện lệnh call
+- Với internal calling:
+    + private: chỉ có thể truy cập từ các phương thức bên trong contract
+    + internal: chỉ có thể truy cập từ các phương thức bên trong contract hoặc từ contract con (kế thừa)
+- Với external calling:
+    + public: tất cả đều access
+    + external: Access bỏi bên ngoài nhưng không thể access bởi chính các function bên trong cùng 1 contract
+
+4.Memory and Storage
+- State variables và Local Variables of structs, array mặc định lưu trữ stored.
+- Function arguments mặc định lưu trữ ở memory.
+- Keyword "memory" là bắt buộc nếu muốn pass by value cho các kiểu dữ liệu reference như arrays, structs, mappings, and strings.
+
+5.If statement and Required()
+pragma solidity 0.6.0;
+
+contract Example {
+
+    address owner;
+    event SomeEvent();
+    event OtherEvent();
+
+    function doSomething(address _someowner) public {
+        transfer2(_someowner);
+        emit SomeEvent();
+        transfer1(_someowner);
+        emit OtherEvent();
+    }
+
+    function transfer1(address _newOwner) public {
+        require(msg.sender == owner);
+        // Do the actual transfer
+    }
+
+    function transfer2(address _newOwner) public {
+        if (msg.sender != owner) return;
+        // Do the actual transfer
+    }
+}
+*) _someowner equals to owner:
+
+- transfer2 performs the transfer
+- event SomeEvent is emitted
+- transfer1 performs the transfer
+- event OtherEvent is emitted
+*) _someowner does not equal to owner:
+
+- transfer2 does not perform the transfer but returns execution to previous function (doSomething)
+- event SomeEvent is emitted
+- transfer1 does not perform the transfer and halts the transaction execution with an error
+- event OtherEvent is not emitted as the execution never reaches this far
